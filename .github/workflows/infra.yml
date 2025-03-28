@@ -116,8 +116,17 @@ jobs:
           terraform -chdir=terraform output -raw ec2_public_ip > ec2_ip.txt
           terraform -chdir=terraform output -raw rds_endpoint > rds_endpoint.txt
 
+      - name: Verify output files exist before upload
+        run: |
+          echo "Directory contents:"
+          ls -lah
+          echo "------ ec2_ip.txt ------"
+          cat ec2_ip.txt
+          echo "------ rds_endpoint.txt ------"
+          cat rds_endpoint.txt
+
       - name: Upload outputs
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3
         with:
           name: terraform-outputs
           path: |
