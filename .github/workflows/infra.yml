@@ -113,7 +113,7 @@ jobs:
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -auto-approve -input=false
+        run: terraform -chdir=terraform apply -auto-approve -input=false -lock=false
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
