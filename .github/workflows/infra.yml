@@ -44,7 +44,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
 
       - name: Terraform Init
-        run: terraform -chdir=terraform init
+        run: terraform -chdir=terraform init -reconfigure
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
@@ -133,4 +133,4 @@ jobs:
             ec2_ip.txt
             rds_endpoint.txt
 
-#test
+#test2
