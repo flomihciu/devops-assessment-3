@@ -20,3 +20,4 @@ We will provide a few examples to get you started.
 You can find additional instructions and a scoring/requirements rubric in the [Assessment 3 Document](https://docs.google.com/document/d/1IWGg04gIUM2j9hj8cyiFhqTTRcr-NvwhIEeYEbRIIQo/edit?tab=t.kt3fj1iax9hz#heading=h.2mviilujhigk)
 
 The assessment is due on the 15th.  You can present earlier for bonus points.
+# devops-assessment-3
