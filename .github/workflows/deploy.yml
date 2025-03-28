@@ -5,10 +5,10 @@ on:
     workflows: ["Provision Infrastructure"]
     types:
       - completed
-  workflow_dispatch:
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -65,5 +65,3 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
           RDS_ENDPOINT: ${{ steps.read_outputs.outputs.rds_endpoint }}
-
-          #test3
