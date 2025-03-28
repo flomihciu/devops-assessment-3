@@ -66,4 +66,4 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           RDS_ENDPOINT: ${{ steps.read_outputs.outputs.rds_endpoint }}
 
-          #test
+          #te
