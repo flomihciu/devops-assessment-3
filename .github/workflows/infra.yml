@@ -39,10 +39,7 @@ jobs:
           else
             echo "Creating S3 and DynamoDB resources for backend..."
             terraform -chdir=terraform init -backend=false
-            terraform -chdir=terraform apply \
-              -target=aws_s3_bucket.terraform_state \
-              -target=aws_dynamodb_table.terraform_locks \
-              -auto-approve
+            terraform -chdir=terraform apply -auto-approve
           fi
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
