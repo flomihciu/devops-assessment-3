@@ -34,9 +34,15 @@ jobs:
           if aws s3api head-bucket --bucket "$S3_BUCKET" 2>/dev/null; then
             echo "S3 bucket exists."
           else
+            echo "Creating S3 and DynamoDB resources for backend..."
             terraform -chdir=terraform init -backend=false
-            terraform -chdir=terraform apply -target=aws_s3_bucket.terraform_state -target=aws_dynamodb_table.terraform_locks -auto-approve
+            terraform -chdir=terraform apply \
+              -target=aws_s3_bucket.terraform_state \
+              -target=aws_dynamodb_table.terraform_locks \
+              -auto-approve
           fi
+          
+          # Clean local state before backend re-init
           rm -rf terraform/.terraform terraform/.terraform.lock.hcl
 
       - name: Terraform Init

@@ -28,8 +28,8 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
+      - name: Terraform Init with backend reconfiguration
+        run: terraform -chdir=terraform init -reconfigure
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
@@ -41,5 +41,3 @@ jobs:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
           TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
-
-          #test3
