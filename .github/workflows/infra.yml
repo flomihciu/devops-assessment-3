@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y jq ansible
+          sudo apt-get install -y jq ansible gh
           aws --version
 
       - name: Configure AWS credentials
@@ -66,25 +66,21 @@ jobs:
               terraform -chdir=terraform import -lock=false aws_iam_role.ec2_role flo-ec2-role
             fi
           fi
-
           if aws iam get-instance-profile --instance-profile-name flo-ec2-instance-profile 2>/dev/null; then
             if ! terraform -chdir=terraform state list | grep aws_iam_instance_profile.ec2_instance_profile; then
               terraform -chdir=terraform import -lock=false aws_iam_instance_profile.ec2_instance_profile flo-ec2-instance-profile
             fi
           fi
-
           if aws rds describe-db-instances --db-instance-identifier flo-postgres-db 2>/dev/null; then
             if ! terraform -chdir=terraform state list | grep aws_db_instance.db; then
               terraform -chdir=terraform import -lock=false aws_db_instance.db flo-postgres-db
             fi
           fi
-
           VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=flo-vpc" --query "Vpcs[0].VpcId" --output text)
           if [ "$VPC_ID" != "None" ] && [ -n "$VPC_ID" ]; then
             if ! terraform -chdir=terraform state list | grep aws_vpc.main_vpc; then
               terraform -chdir=terraform import -lock=false aws_vpc.main_vpc $VPC_ID
             fi
-
             IGW_ID=$(aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VPC_ID" --query "InternetGateways[0].InternetGatewayId" --output text)
             if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
               if ! terraform -chdir=terraform state list | grep aws_internet_gateway.igw; then
@@ -92,35 +88,30 @@ jobs:
               fi
             fi
           fi
-
           SUBNET1_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-1" --query "Subnets[0].SubnetId" --output text)
           if [ "$SUBNET1_ID" != "None" ] && [ -n "$SUBNET1_ID" ]; then
             if ! terraform -chdir=terraform state list | grep aws_subnet.public_subnet_1; then
               terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_1 $SUBNET1_ID
             fi
           fi
-
           SUBNET2_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-2" --query "Subnets[0].SubnetId" --output text)
           if [ "$SUBNET2_ID" != "None" ] && [ -n "$SUBNET2_ID" ]; then
             if ! terraform -chdir=terraform state list | grep aws_subnet.public_subnet_2; then
               terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_2 $SUBNET2_ID
             fi
           fi
-
           APP_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-app-sg" --query "SecurityGroups[0].GroupId" --output text)
           if [ "$APP_SG_ID" != "None" ] && [ -n "$APP_SG_ID" ]; then
             if ! terraform -chdir=terraform state list | grep aws_security_group.app_sg; then
               terraform -chdir=terraform import -lock=false aws_security_group.app_sg $APP_SG_ID
             fi
           fi
-
           DB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-db-sg" --query "SecurityGroups[0].GroupId" --output text)
           if [ "$DB_SG_ID" != "None" ] && [ -n "$DB_SG_ID" ]; then
             if ! terraform -chdir=terraform state list | grep aws_security_group.db_sg; then
               terraform -chdir=terraform import -lock=false aws_security_group.db_sg $DB_SG_ID
             fi
           fi
-
           if aws rds describe-db-subnet-groups --db-subnet-group-name flo-db-subnet-group 2>/dev/null; then
             if ! terraform -chdir=terraform state list | grep aws_db_subnet_group.db_subnet_group; then
               terraform -chdir=terraform import -lock=false aws_db_subnet_group.db_subnet_group flo-db-subnet-group
@@ -159,3 +150,10 @@ jobs:
           path: |
             ec2_ip.txt
             rds_endpoint.txt
+
+      - name: Store Terraform outputs as GitHub Secrets
+        run: |
+          gh secret set EC2_PUBLIC_IP --repo ${{ github.repository }} --body="$(cat ec2_ip.txt)"
+          gh secret set RDS_ENDPOINT --repo ${{ github.repository }} --body="$(cat rds_endpoint.txt)"
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

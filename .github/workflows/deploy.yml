@@ -20,21 +20,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible
 
-      - name: Download Terraform Outputs
-        uses: actions/download-artifact@v4.2.1
-        with:
-          name: terraform-outputs
-
-      - name: Read Outputs
-        id: read_outputs
-        run: |
-          echo "ec2_ip=$(cat ec2_ip.txt)" >> $GITHUB_OUTPUT
-          echo "rds_endpoint=$(cat rds_endpoint.txt)" >> $GITHUB_OUTPUT
-
       - name: Debug Outputs
         run: |
-          echo "EC2 IP: ${{ steps.read_outputs.outputs.ec2_ip }}"
-          echo "RDS Endpoint: ${{ steps.read_outputs.outputs.rds_endpoint }}"
+          echo "EC2 IP: ${{ secrets.EC2_PUBLIC_IP }}"
+          echo "RDS Endpoint: ${{ secrets.RDS_ENDPOINT }}"
 
       - name: Docker Login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -52,7 +41,7 @@ jobs:
       - name: Create Ansible Inventory
         run: |
           echo "[web]" > ansible/inventory.ini
-          echo "${{ steps.read_outputs.outputs.ec2_ip }}" >> ansible/inventory.ini
+          echo "${{ secrets.EC2_PUBLIC_IP }}" >> ansible/inventory.ini
           cat ansible/inventory.ini
 
       - name: Run Ansible Playbook
@@ -64,4 +53,4 @@ jobs:
           DB_USER: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
-          RDS_ENDPOINT: ${{ steps.read_outputs.outputs.rds_endpoint }}
+          RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
