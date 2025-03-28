@@ -38,6 +38,9 @@ jobs:
             terraform init -backend=false
             terraform apply -target=aws_s3_bucket.terraform_state -target=aws_dynamodb_table.terraform_locks -auto-approve
           fi
+          # Clean up .terraform to avoid stale state interfering with backend init
+          rm -rf .terraform .terraform.lock.hcl
+
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -132,5 +135,3 @@ jobs:
           path: |
             ec2_ip.txt
             rds_endpoint.txt
-
-#test3
