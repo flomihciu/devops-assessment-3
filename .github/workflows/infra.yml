@@ -28,6 +28,9 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Temporarily disable backend config for bootstrap
+        run: mv terraform/backend.tf terraform/backend.tf.bak
+
       - name: Conditionally create S3 backend resources
         run: |
           S3_BUCKET="do-assessment3-movie-db-flo"
@@ -41,9 +44,12 @@ jobs:
               -target=aws_dynamodb_table.terraform_locks \
               -auto-approve
           fi
-          
-          # Clean local state before backend re-init
-          rm -rf terraform/.terraform terraform/.terraform.lock.hcl
+
+      - name: Restore backend config
+        run: mv terraform/backend.tf.bak terraform/backend.tf
+
+      - name: Clean local Terraform state before reinitialization
+        run: rm -rf terraform/.terraform terraform/.terraform.lock.hcl
 
       - name: Terraform Init
         run: terraform -chdir=terraform init -reconfigure
