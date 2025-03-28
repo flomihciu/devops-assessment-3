@@ -44,6 +44,10 @@ jobs:
               -target=aws_dynamodb_table.terraform_locks \
               -auto-approve
           fi
+        env:
+          TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
+          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Restore backend config
         run: mv terraform/backend.tf.bak terraform/backend.tf
