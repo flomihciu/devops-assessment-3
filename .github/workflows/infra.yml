@@ -35,7 +35,7 @@ jobs:
           if aws s3api head-bucket --bucket "$S3_BUCKET" 2>/dev/null; then
             echo "S3 bucket exists."
           else
-            terraform init -backend=false -reconfigure
+            terraform init -backend=false
             terraform apply -target=aws_s3_bucket.terraform_state -target=aws_dynamodb_table.terraform_locks -auto-approve
           fi
         env:
@@ -133,4 +133,4 @@ jobs:
             ec2_ip.txt
             rds_endpoint.txt
 
-#test2
+#test3
