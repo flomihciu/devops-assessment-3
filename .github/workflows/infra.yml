@@ -30,21 +30,14 @@ jobs:
 
       - name: Conditionally create S3 backend resources
         run: |
-          cd terraform
           S3_BUCKET="do-assessment3-movie-db-flo"
           if aws s3api head-bucket --bucket "$S3_BUCKET" 2>/dev/null; then
             echo "S3 bucket exists."
           else
-            terraform init -backend=false
-            terraform apply -target=aws_s3_bucket.terraform_state -target=aws_dynamodb_table.terraform_locks -auto-approve
+            terraform -chdir=terraform init -backend=false
+            terraform -chdir=terraform apply -target=aws_s3_bucket.terraform_state -target=aws_dynamodb_table.terraform_locks -auto-approve
           fi
-          # Clean up .terraform to avoid stale state interfering with backend init
-          rm -rf .terraform .terraform.lock.hcl
-
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          rm -rf terraform/.terraform terraform/.terraform.lock.hcl
 
       - name: Terraform Init
         run: terraform -chdir=terraform init -reconfigure
@@ -55,52 +48,48 @@ jobs:
 
       - name: Terraform Import
         run: |
-          cd terraform
-
           if aws iam get-role --role-name flo-ec2-role 2>/dev/null; then
-            terraform import -lock=false aws_iam_role.ec2_role flo-ec2-role || true
+            terraform -chdir=terraform import -lock=false aws_iam_role.ec2_role flo-ec2-role || true
           fi
-
           if aws iam get-instance-profile --instance-profile-name flo-ec2-instance-profile 2>/dev/null; then
-            terraform import -lock=false aws_iam_instance_profile.ec2_instance_profile flo-ec2-instance-profile || true
+            terraform -chdir=terraform import -lock=false aws_iam_instance_profile.ec2_instance_profile flo-ec2-instance-profile || true
           fi
-
           if aws rds describe-db-instances --db-instance-identifier flo-postgres-db 2>/dev/null; then
-            terraform import -lock=false aws_db_instance.db flo-postgres-db || true
+            terraform -chdir=terraform import -lock=false aws_db_instance.db flo-postgres-db || true
           fi
 
-          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=flo-vpc" --query "Vpcs[0].VpcId" --output text 2>/dev/null)
+          VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=flo-vpc" --query "Vpcs[0].VpcId" --output text)
           if [ "$VPC_ID" != "None" ] && [ -n "$VPC_ID" ]; then
-            terraform import -lock=false aws_vpc.main_vpc $VPC_ID || true
+            terraform -chdir=terraform import -lock=false aws_vpc.main_vpc $VPC_ID || true
 
-            IGW_ID=$(aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VPC_ID" --query "InternetGateways[0].InternetGatewayId" --output text 2>/dev/null)
+            IGW_ID=$(aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VPC_ID" --query "InternetGateways[0].InternetGatewayId" --output text)
             if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
-              terraform import -lock=false aws_internet_gateway.igw $IGW_ID || true
+              terraform -chdir=terraform import -lock=false aws_internet_gateway.igw $IGW_ID || true
             fi
           fi
 
-          SUBNET1_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-1" --query "Subnets[0].SubnetId" --output text 2>/dev/null)
+          SUBNET1_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-1" --query "Subnets[0].SubnetId" --output text)
           if [ "$SUBNET1_ID" != "None" ] && [ -n "$SUBNET1_ID" ]; then
-            terraform import -lock=false aws_subnet.public_subnet_1 $SUBNET1_ID || true
+            terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_1 $SUBNET1_ID || true
           fi
 
-          SUBNET2_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-2" --query "Subnets[0].SubnetId" --output text 2>/dev/null)
+          SUBNET2_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-2" --query "Subnets[0].SubnetId" --output text)
           if [ "$SUBNET2_ID" != "None" ] && [ -n "$SUBNET2_ID" ]; then
-            terraform import -lock=false aws_subnet.public_subnet_2 $SUBNET2_ID || true
+            terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_2 $SUBNET2_ID || true
           fi
 
-          APP_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-app-sg" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+          APP_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-app-sg" --query "SecurityGroups[0].GroupId" --output text)
           if [ "$APP_SG_ID" != "None" ] && [ -n "$APP_SG_ID" ]; then
-            terraform import -lock=false aws_security_group.app_sg $APP_SG_ID || true
+            terraform -chdir=terraform import -lock=false aws_security_group.app_sg $APP_SG_ID || true
           fi
 
-          DB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-db-sg" --query "SecurityGroups[0].GroupId" --output text 2>/dev/null)
+          DB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-db-sg" --query "SecurityGroups[0].GroupId" --output text)
           if [ "$DB_SG_ID" != "None" ] && [ -n "$DB_SG_ID" ]; then
-            terraform import -lock=false aws_security_group.db_sg $DB_SG_ID || true
+            terraform -chdir=terraform import -lock=false aws_security_group.db_sg $DB_SG_ID || true
           fi
 
           if aws rds describe-db-subnet-groups --db-subnet-group-name flo-db-subnet-group 2>/dev/null; then
-            terraform import -lock=false aws_db_subnet_group.db_subnet_group flo-db-subnet-group || true
+            terraform -chdir=terraform import -lock=false aws_db_subnet_group.db_subnet_group flo-db-subnet-group || true
           fi
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
