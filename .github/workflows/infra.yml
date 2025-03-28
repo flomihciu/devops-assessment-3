@@ -62,47 +62,69 @@ jobs:
       - name: Terraform Import
         run: |
           if aws iam get-role --role-name flo-ec2-role 2>/dev/null; then
-            terraform -chdir=terraform import -lock=false aws_iam_role.ec2_role flo-ec2-role || true
+            if ! terraform -chdir=terraform state list | grep aws_iam_role.ec2_role; then
+              terraform -chdir=terraform import -lock=false aws_iam_role.ec2_role flo-ec2-role
+            fi
           fi
+
           if aws iam get-instance-profile --instance-profile-name flo-ec2-instance-profile 2>/dev/null; then
-            terraform -chdir=terraform import -lock=false aws_iam_instance_profile.ec2_instance_profile flo-ec2-instance-profile || true
+            if ! terraform -chdir=terraform state list | grep aws_iam_instance_profile.ec2_instance_profile; then
+              terraform -chdir=terraform import -lock=false aws_iam_instance_profile.ec2_instance_profile flo-ec2-instance-profile
+            fi
           fi
+
           if aws rds describe-db-instances --db-instance-identifier flo-postgres-db 2>/dev/null; then
-            terraform -chdir=terraform import -lock=false aws_db_instance.db flo-postgres-db || true
+            if ! terraform -chdir=terraform state list | grep aws_db_instance.db; then
+              terraform -chdir=terraform import -lock=false aws_db_instance.db flo-postgres-db
+            fi
           fi
 
           VPC_ID=$(aws ec2 describe-vpcs --filters "Name=tag:Name,Values=flo-vpc" --query "Vpcs[0].VpcId" --output text)
           if [ "$VPC_ID" != "None" ] && [ -n "$VPC_ID" ]; then
-            terraform -chdir=terraform import -lock=false aws_vpc.main_vpc $VPC_ID || true
+            if ! terraform -chdir=terraform state list | grep aws_vpc.main_vpc; then
+              terraform -chdir=terraform import -lock=false aws_vpc.main_vpc $VPC_ID
+            fi
 
             IGW_ID=$(aws ec2 describe-internet-gateways --filters "Name=attachment.vpc-id,Values=$VPC_ID" --query "InternetGateways[0].InternetGatewayId" --output text)
             if [ "$IGW_ID" != "None" ] && [ -n "$IGW_ID" ]; then
-              terraform -chdir=terraform import -lock=false aws_internet_gateway.igw $IGW_ID || true
+              if ! terraform -chdir=terraform state list | grep aws_internet_gateway.igw; then
+                terraform -chdir=terraform import -lock=false aws_internet_gateway.igw $IGW_ID
+              fi
             fi
           fi
 
           SUBNET1_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-1" --query "Subnets[0].SubnetId" --output text)
           if [ "$SUBNET1_ID" != "None" ] && [ -n "$SUBNET1_ID" ]; then
-            terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_1 $SUBNET1_ID || true
+            if ! terraform -chdir=terraform state list | grep aws_subnet.public_subnet_1; then
+              terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_1 $SUBNET1_ID
+            fi
           fi
 
           SUBNET2_ID=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=flo-public-subnet-2" --query "Subnets[0].SubnetId" --output text)
           if [ "$SUBNET2_ID" != "None" ] && [ -n "$SUBNET2_ID" ]; then
-            terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_2 $SUBNET2_ID || true
+            if ! terraform -chdir=terraform state list | grep aws_subnet.public_subnet_2; then
+              terraform -chdir=terraform import -lock=false aws_subnet.public_subnet_2 $SUBNET2_ID
+            fi
           fi
 
           APP_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-app-sg" --query "SecurityGroups[0].GroupId" --output text)
           if [ "$APP_SG_ID" != "None" ] && [ -n "$APP_SG_ID" ]; then
-            terraform -chdir=terraform import -lock=false aws_security_group.app_sg $APP_SG_ID || true
+            if ! terraform -chdir=terraform state list | grep aws_security_group.app_sg; then
+              terraform -chdir=terraform import -lock=false aws_security_group.app_sg $APP_SG_ID
+            fi
           fi
 
           DB_SG_ID=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=flo-db-sg" --query "SecurityGroups[0].GroupId" --output text)
           if [ "$DB_SG_ID" != "None" ] && [ -n "$DB_SG_ID" ]; then
-            terraform -chdir=terraform import -lock=false aws_security_group.db_sg $DB_SG_ID || true
+            if ! terraform -chdir=terraform state list | grep aws_security_group.db_sg; then
+              terraform -chdir=terraform import -lock=false aws_security_group.db_sg $DB_SG_ID
+            fi
           fi
 
           if aws rds describe-db-subnet-groups --db-subnet-group-name flo-db-subnet-group 2>/dev/null; then
-            terraform -chdir=terraform import -lock=false aws_db_subnet_group.db_subnet_group flo-db-subnet-group || true
+            if ! terraform -chdir=terraform state list | grep aws_db_subnet_group.db_subnet_group; then
+              terraform -chdir=terraform import -lock=false aws_db_subnet_group.db_subnet_group flo-db-subnet-group
+            fi
           fi
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
@@ -137,4 +159,3 @@ jobs:
           path: |
             ec2_ip.txt
             rds_endpoint.txt
-#test
