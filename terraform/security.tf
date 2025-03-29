@@ -4,6 +4,14 @@ resource "aws_security_group" "app_sg" {
   vpc_id      = aws_vpc.main_vpc.id
 
   ingress {
+    description = "Allow SSH from Bastion host"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
+  ingress {
     description = "Allow HTTP traffic"
     from_port   = 80
     to_port     = 80
@@ -17,23 +25,6 @@ resource "aws_security_group" "app_sg" {
     to_port     = 3000
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
-  }
-
-  ingress {
-    description = "Allow SSH from Flo IP"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.ssh_ingress_ip]
-  }
-
-  # 🔥 NEW ingress rule to allow SSH FROM BASTION
-  ingress {
-    description     = "Allow SSH from bastion host"
-    from_port       = 22
-    to_port         = 22
-    protocol        = "tcp"
-    security_groups = [aws_security_group.bastion_sg.id]
   }
 
   egress {
