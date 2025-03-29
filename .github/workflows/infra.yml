@@ -165,3 +165,5 @@ jobs:
           gh secret set RDS_ENDPOINT --repo ${{ github.repository }} --body="$(cat rds_endpoint.txt)"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+          #test
