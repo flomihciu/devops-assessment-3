@@ -27,6 +27,15 @@ resource "aws_security_group" "app_sg" {
     cidr_blocks = [var.ssh_ingress_ip]
   }
 
+  # 🔥 NEW ingress rule to allow SSH FROM BASTION
+  ingress {
+    description     = "Allow SSH from bastion host"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
