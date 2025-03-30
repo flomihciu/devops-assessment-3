@@ -20,7 +20,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible openssh-client
 
-      # 🛡️ Add SSH key with agent
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
@@ -29,9 +28,14 @@ jobs:
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts || true
-          ssh-keyscan -H ${{ secrets.EC2_PRIVATE_IP }} >> ~/.ssh/known_hosts || true
+          ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts || true
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
+
+      - name: Debug SSH Connection
+        run: |
+          echo "Trying direct SSH to EC2..."
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_PUBLIC_IP }} 'echo "✅ SSH Connected!"'
 
       - name: Docker Login
         run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -49,12 +53,12 @@ jobs:
       - name: Create Ansible Inventory
         run: |
           echo "[web]" > ansible/inventory.ini
-          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }}'" >> ansible/inventory.ini
+          echo "app ansible_host=${{ secrets.EC2_PUBLIC_IP }} ansible_user=ubuntu" >> ansible/inventory.ini
           cat ansible/inventory.ini
 
-      - name: Run Ansible Playbook
+      - name: Run Ansible Playbook with Debug Output
         run: |
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+          ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml
         env:
           ANSIBLE_HOST_KEY_CHECKING: false
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
