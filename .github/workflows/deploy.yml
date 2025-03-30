@@ -20,6 +20,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible openssh-client
 
+      - name: Docker Login ✅
+        run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Build & Push Docker Images
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest ./backend
@@ -61,4 +67,3 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           ANSIBLE_HOST_KEY_CHECKING: false
-#test
