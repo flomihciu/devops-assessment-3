@@ -41,7 +41,7 @@ jobs:
         run: |
           # Set up SSH
           mkdir -p ~/.ssh
-          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
@@ -59,6 +59,9 @@ jobs:
 
           # Run Ansible playbook
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml
+
+          # Cleanup
+          rm -f ~/.ssh/id_rsa
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -67,4 +70,3 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           ANSIBLE_HOST_KEY_CHECKING: false
-#test
