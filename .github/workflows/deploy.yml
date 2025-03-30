@@ -20,13 +20,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible openssh-client
 
-      # 🛡️ Add SSH key
+      # 🛡️ Add SSH key with agent
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.EC2_PRIVATE_IP }} >> ~/.ssh/known_hosts
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
 
@@ -54,11 +57,10 @@ jobs:
         run: |
           ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
         env:
-          ANSIBLE_HOST_KEY_CHECKING: False
+          ANSIBLE_HOST_KEY_CHECKING: false
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-          DB_USER: ${{ secrets.DB_USERNAME }}
+          DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
-
-          #test1
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

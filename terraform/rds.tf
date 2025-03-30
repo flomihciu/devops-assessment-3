@@ -3,7 +3,7 @@ resource "aws_db_instance" "db" {
   engine                 = "postgres"
   instance_class         = var.db_instance_type
   allocated_storage      = 20
-  username               = var.db_username
+  username               = var.db_user
   password               = var.db_password
   publicly_accessible    = false
   skip_final_snapshot    = true

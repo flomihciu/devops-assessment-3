@@ -32,12 +32,12 @@ jobs:
         run: terraform -chdir=terraform init -reconfigure
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
-          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+          TF_VAR_db_username: ${{ secrets.DB_USER }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
       - name: Terraform Destroy
         run: terraform -chdir=terraform destroy -auto-approve
         env:
           TF_VAR_ec2_key_pair_name: ${{ secrets.AWS_SSH_KEY_NAME }}
-          TF_VAR_db_username: ${{ secrets.DB_USERNAME }}
+          TF_VAR_db_username: ${{ secrets.DB_USER }}
           TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
