@@ -1,4 +1,3 @@
----
 - name: Deploy Movie DB App
   hosts: web
   become: true
@@ -7,7 +6,7 @@
     docker_image_backend: "{{ lookup('env', 'DOCKER_USERNAME') }}/backend:latest"
     docker_image_frontend: "{{ lookup('env', 'DOCKER_USERNAME') }}/frontend:latest"
     db_host: "{{ lookup('env', 'RDS_ENDPOINT') }}"
-    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_user: "{{ lookup('env', 'DB_USERNAME') }}"
     db_pass: "{{ lookup('env', 'DB_PASSWORD') }}"
     db_name: "{{ lookup('env', 'DB_NAME') }}"
 
@@ -19,31 +18,31 @@
         update_cache: true
 
     - name: Pull backend image
-      docker_image:
+      community.docker.docker_image:
         name: "{{ docker_image_backend }}"
         source: pull
       register: backend_image_pull
 
     - name: Pull frontend image
-      docker_image:
+      community.docker.docker_image:
         name: "{{ docker_image_frontend }}"
         source: pull
       register: frontend_image_pull
 
     - name: Stop and remove existing backend container (if exists)
-      docker_container:
+      community.docker.docker_container:
         name: backend
         state: absent
       when: backend_image_pull.changed
 
     - name: Stop and remove existing frontend container (if exists)
-      docker_container:
+      community.docker.docker_container:
         name: frontend
         state: absent
       when: frontend_image_pull.changed
 
     - name: Run backend container with connection string
-      docker_container:
+      community.docker.docker_container:
         name: backend
         image: "{{ docker_image_backend }}"
         state: started
@@ -58,7 +57,7 @@
       when: backend_image_pull.changed
 
     - name: Run frontend container
-      docker_container:
+      community.docker.docker_container:
         name: frontend
         image: "{{ docker_image_frontend }}"
         state: started

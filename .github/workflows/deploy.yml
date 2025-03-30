@@ -20,48 +20,44 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible openssh-client
 
-      - name: Set up SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          eval "$(ssh-agent -s)"
-          ssh-add ~/.ssh/id_rsa
-
-          # Add bastion and EC2 private IP to known_hosts to avoid SSH confirmation prompt
-          ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts || true
-          ssh-keyscan -H ${{ secrets.EC2_PRIVATE_IP }} >> ~/.ssh/known_hosts || true
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
-
-      - name: Docker Login
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-
-      - name: Build & Push Backend
+      - name: Build & Push Docker Images
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest ./backend
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
 
-      - name: Build & Push Frontend
-        run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest ./frontend
           docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Create Ansible Inventory
+      - name: SSH Setup + Run Ansible Deploy
         run: |
+          # Set up SSH
+          mkdir -p ~/.ssh
+          echo "${SSH_PRIVATE_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/id_rsa
+
+          # Add known hosts
+          ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts || true
+          ssh-keyscan -H ${{ secrets.EC2_PRIVATE_IP }} >> ~/.ssh/known_hosts || true
+
+          # Create Ansible inventory
           echo "[web]" > ansible/inventory.ini
-          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }}'" >> ansible/inventory.ini
-          cat ansible/inventory.ini
+          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }} -o IdentityFile=~/.ssh/id_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
 
-      - name: Run Ansible Playbook with Debug Output
-        run: |
+          # Install Ansible collections (includes community.docker)
+          ansible-galaxy collection install -r ansible/requirements.yml
+
+          # Run Ansible playbook
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml
         env:
-          ANSIBLE_HOST_KEY_CHECKING: false
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          #test
+          ANSIBLE_HOST_KEY_CHECKING: false
