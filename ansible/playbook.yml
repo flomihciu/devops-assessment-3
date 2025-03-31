@@ -68,3 +68,16 @@
         published_ports:
           - "80:80"
       when: frontend_image_pull.changed
+
+    - name: Check if frontend app is responding
+      ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost
+      register: frontend_status
+
+    - name: Fail if frontend app did not return 200
+      ansible.builtin.fail:
+        msg: "Frontend app is not responding as expected!"
+      when: frontend_status.stdout != "200"
+
+    - name: Debug frontend status code
+      ansible.builtin.debug:
+        msg: "Frontend responded with status code: {{ frontend_status.stdout }}"
