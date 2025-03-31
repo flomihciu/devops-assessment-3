@@ -35,7 +35,13 @@
         dest: /home/ubuntu/.env
         mode: '0644'
 
-    - name: Stop and remove existing containers (if any)
+    - name: Stop all running containers
+      ansible.builtin.shell: docker stop $(docker ps -aq) || true
+
+    - name: Remove all containers
+      ansible.builtin.shell: docker rm $(docker ps -aq) || true
+
+    - name: Run docker compose down (clean up volumes/networks)
       ansible.builtin.shell: docker compose down || true
       args:
         chdir: /home/ubuntu
