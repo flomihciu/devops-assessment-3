@@ -35,6 +35,11 @@
         dest: /home/ubuntu/.env
         mode: '0644'
 
+    - name: Stop and remove existing containers (if any)
+      ansible.builtin.shell: docker compose down || true
+      args:
+        chdir: /home/ubuntu
+
     - name: Ensure containers are running with Docker Compose v2
       community.docker.docker_compose_v2:
         project_src: /home/ubuntu
