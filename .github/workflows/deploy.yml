@@ -26,20 +26,31 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build & Push Docker Images
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest ./flask-react/flask
-          docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest ./flask-react/nginx/reactApp
-          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build & Push Backend Docker Image (with cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: flask-react/flask
+          file: flask-react/flask/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # 🐛 Optional: Sleep for debug window
+      - name: Build & Push Frontend Docker Image (with cache)
+        uses: docker/build-push-action@v5
+        with:
+          context: flask-react/nginx
+          file: flask-react/nginx/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
       - name: Sleep for 2 minutes (debug only)
-        if: github.actor == 'your-github-username'  # Replace this with your GitHub username if needed
+        if: github.actor == 'your-github-username'
         run: sleep 120
 
       - name: Decode and copy PEM key to bastion
