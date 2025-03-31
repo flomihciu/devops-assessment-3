@@ -47,7 +47,7 @@ jobs:
         run: |
           echo "${{ secrets.BASTION_SSH_KEY }}" > flo-east-1.pem
           chmod 600 flo-east-1.pem
-          scp -o StrictHostKeyChecking=no -i flo-east-1.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:~/flo-east-1.pem
+          scp -o StrictHostKeyChecking=no -i flo-east-1.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:/home/ubuntu/flo-east-1.pem
 
       - name: SSH Setup + Run Ansible Deploy
         run: |
