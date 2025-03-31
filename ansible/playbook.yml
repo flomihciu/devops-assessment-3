@@ -54,13 +54,13 @@
     - name: Show running containers
       ansible.builtin.shell: docker ps
 
-    - name: Show logs from backend container
-      ansible.builtin.shell: docker logs $(docker ps -aqf "name=backend") || true
-      register: backend_logs
+    - name: Show logs from all containers
+      ansible.builtin.shell: docker ps -aq | xargs -r docker logs || true
+      register: all_logs
 
-    - name: Print backend container logs
+    - name: Print all container logs
       ansible.builtin.debug:
-        msg: "{{ backend_logs.stdout }}"
+        msg: "{{ all_logs.stdout }}"
 
     - name: Wait for backend app to respond
       ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 || true
