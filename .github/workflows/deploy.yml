@@ -42,8 +42,8 @@ jobs:
       - name: Build & Push Frontend Docker Image (with cache)
         uses: docker/build-push-action@v5
         with:
-          context: flask-react/nginx
-          file: flask-react/nginx/Dockerfile
+          context: flask-react/nginx/reactApp
+          file: flask-react/nginx/reactApp/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest
           cache-from: type=gha
