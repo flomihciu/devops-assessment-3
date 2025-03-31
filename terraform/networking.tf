@@ -36,6 +36,26 @@ resource "aws_subnet" "public_subnet_2" {
   }
 }
 
+resource "aws_subnet" "private_subnet_1" {
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = "10.0.3.0/24"
+  availability_zone       = "us-east-1a"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "flo-private-subnet-1"
+  }
+}
+
+resource "aws_subnet" "private_subnet_2" {
+  vpc_id                  = aws_vpc.main_vpc.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "flo-private-subnet-2"
+  }
+}
+
 resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.main_vpc.id
 
@@ -55,11 +75,48 @@ resource "aws_main_route_table_association" "main_rt_assoc" {
   route_table_id = aws_route_table.public_rt.id
 }
 
+resource "aws_eip" "nat_eip" {
+  vpc = true
+  depends_on = [aws_internet_gateway.igw]
+}
+
+resource "aws_nat_gateway" "nat_gw" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_subnet_1.id
+  depends_on    = [aws_internet_gateway.igw]
+  tags = {
+    Name = "flo-nat-gateway"
+  }
+}
+
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.main_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat_gw.id
+  }
+
+  tags = {
+    Name = "flo-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "private_rta_1" {
+  subnet_id      = aws_subnet.private_subnet_1.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+resource "aws_route_table_association" "private_rta_2" {
+  subnet_id      = aws_subnet.private_subnet_2.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
 resource "aws_db_subnet_group" "db_subnet_group" {
   name = "flo-db-subnet-group"
   subnet_ids = [
-    aws_subnet.public_subnet_1.id,
-    aws_subnet.public_subnet_2.id
+    aws_subnet.private_subnet_1.id,
+    aws_subnet.private_subnet_2.id
   ]
 
   tags = {

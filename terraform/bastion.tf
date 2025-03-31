@@ -8,7 +8,7 @@ resource "aws_security_group" "bastion_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # 🔒 change this to GitHub Actions IP range later
+    cidr_blocks = ["0.0.0.0/0"] # 🔒 change this later to GitHub Actions IP range
   }
 
   egress {
@@ -26,12 +26,18 @@ resource "aws_security_group" "bastion_sg" {
 }
 
 resource "aws_instance" "bastion" {
-  ami                         = "ami-084568db4383264d4" 
+  ami                         = "ami-084568db4383264d4" # ✅ Your original AMI
   instance_type               = "t3.micro"
   subnet_id                   = aws_subnet.public_subnet_1.id
   associate_public_ip_address = true
   key_name                    = var.ec2_key_pair_name
   vpc_security_group_ids      = [aws_security_group.bastion_sg.id]
+
+  user_data = <<EOF
+#!/bin/bash
+yum update -y
+yum install -y aws-cli jq
+EOF
 
   tags = {
     Name        = "flo-bastion-host"
