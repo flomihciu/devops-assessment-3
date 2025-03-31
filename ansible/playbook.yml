@@ -55,16 +55,14 @@
       ansible.builtin.pause:
         seconds: 5
 
-    - name: Show running containers
-      ansible.builtin.shell: docker ps
+    - name: Show all containers
+      ansible.builtin.shell: docker ps -a
 
-    - name: Show logs from all containers
-      ansible.builtin.shell: docker ps -aq | xargs -r docker logs || true
-      register: all_logs
+    - name: Write container logs to file
+      ansible.builtin.shell: docker ps -aq | xargs -r docker logs > /home/ubuntu/container-logs.txt || true
 
-    - name: Print all container logs
-      ansible.builtin.debug:
-        msg: "{{ all_logs.stdout }}"
+    - name: Print container logs from file
+      ansible.builtin.shell: cat /home/ubuntu/container-logs.txt
 
     - name: Wait for backend app to respond
       ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 || true
