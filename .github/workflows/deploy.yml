@@ -31,7 +31,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest ./flask-react/flask
           docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
 
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest ./flask-react/nginx
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest ./flask-react/nginx/reactApp
           docker push ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
@@ -39,7 +39,7 @@ jobs:
 
       # 🐛 Optional: Sleep for debug window
       - name: Sleep for 2 minutes (debug only)
-        if: github.actor == 'your-github-username'  # Replace this with your GitHub username if you use it
+        if: github.actor == 'your-github-username'  # Replace this with your GitHub username if needed
         run: sleep 120
 
       - name: Decode and copy PEM key to bastion
