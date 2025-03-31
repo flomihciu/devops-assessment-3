@@ -21,8 +21,8 @@
         src: ../.env
         dest: /home/ubuntu/.env
 
-    - name: Ensure containers are running with Docker Compose
-      community.docker.docker_compose:
+    - name: Ensure containers are running with Docker Compose v2
+      community.docker.docker_compose_v2:
         project_src: /home/ubuntu
         state: present
 
