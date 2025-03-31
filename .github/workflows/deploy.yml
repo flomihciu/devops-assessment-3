@@ -42,9 +42,9 @@ jobs:
         if: github.actor == 'your-github-username'  # change this to your GitHub username
         run: sleep 120
 
-      - name: Write and copy PEM key to bastion
+      - name: Decode and copy PEM key to bastion
         run: |
-          echo "${{ secrets.BASTION_SSH_KEY }}" | sed 's/\\n/\n/g' > flo-east-1.pem
+          echo "${{ secrets.BASTION_SSH_KEY_B64 }}" | base64 -d > flo-east-1.pem
           chmod 600 flo-east-1.pem
           scp -o StrictHostKeyChecking=no -i flo-east-1.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:~/flo-east-1.pem
 
