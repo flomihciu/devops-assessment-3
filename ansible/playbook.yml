@@ -69,6 +69,7 @@
           - "80:80"
       when: frontend_image_pull.changed
 
+    # --- Frontend Health Check ---
     - name: Check if frontend app is responding
       ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost
       register: frontend_status
@@ -81,3 +82,17 @@
     - name: Debug frontend status code
       ansible.builtin.debug:
         msg: "Frontend responded with status code: {{ frontend_status.stdout }}"
+
+    # --- Backend Health Check ---
+    - name: Check if backend app is responding
+      ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:5000
+      register: backend_status
+
+    - name: Fail if backend app did not return 200
+      ansible.builtin.fail:
+        msg: "Backend app is not responding as expected!"
+      when: backend_status.stdout != "200"
+
+    - name: Debug backend status code
+      ansible.builtin.debug:
+        msg: "Backend responded with status code: {{ backend_status.stdout }}"
