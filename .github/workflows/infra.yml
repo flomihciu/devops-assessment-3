@@ -131,7 +131,7 @@ jobs:
 
       - name: Save Terraform Outputs to files
         run: |
-          terraform -chdir=terraform output -raw ec2_public_ip > ec2_ip.txt
+          terraform -chdir=terraform output -raw ec2_private_ip > ec2_ip.txt
           terraform -chdir=terraform output -raw ec2_private_ip > ec2_private_ip.txt
           terraform -chdir=terraform output -raw rds_endpoint > rds_endpoint.txt
           terraform -chdir=terraform output -raw bastion_public_ip > bastion_ip.txt
@@ -159,11 +159,8 @@ jobs:
 
       - name: Store Terraform outputs as GitHub Secrets
         run: |
-          gh secret set EC2_PUBLIC_IP --repo ${{ github.repository }} --body="$(cat ec2_ip.txt)"
           gh secret set EC2_PRIVATE_IP --repo ${{ github.repository }} --body="$(cat ec2_private_ip.txt)"
           gh secret set BASTION_PUBLIC_IP --repo ${{ github.repository }} --body="$(cat bastion_ip.txt)"
           gh secret set RDS_ENDPOINT --repo ${{ github.repository }} --body="$(cat rds_endpoint.txt)"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-
-          #test1
