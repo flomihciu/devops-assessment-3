@@ -51,6 +51,10 @@
         project_src: /home/ubuntu
         state: present
 
+    - name: Pause to allow containers to start
+      ansible.builtin.pause:
+        seconds: 5
+
     - name: Show running containers
       ansible.builtin.shell: docker ps
 
