@@ -39,7 +39,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build & Push Frontend Docker Image (with cache)
+      - name: Build & Push Frontend Docker Image (with cache, no-cache enabled)
         uses: docker/build-push-action@v5
         with:
           context: flask-react/nginx/reactApp
@@ -48,6 +48,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          no-cache: true
 
       - name: Sleep for 2 minutes (debug only)
         if: github.actor == 'your-github-username'
