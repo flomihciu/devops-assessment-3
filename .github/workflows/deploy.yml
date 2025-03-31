@@ -28,18 +28,18 @@ jobs:
 
       - name: Build & Push Docker Images
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest ./flask-react/flask
+          docker push ${{ secrets.DOCKER_USERNAME }}/flask-backend:latest
 
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/frontend:latest ./frontend
-          docker push ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest ./flask-react/nginx
+          docker push ${{ secrets.DOCKER_USERNAME }}/nginx-frontend:latest
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
       # 🐛 Optional: Sleep for debug window
       - name: Sleep for 2 minutes (debug only)
-        if: github.actor == 'your-github-username'  # replace with your GitHub username
+        if: github.actor == 'your-github-username'  # Replace this with your GitHub username if you use it
         run: sleep 120
 
       - name: Decode and copy PEM key to bastion
@@ -51,28 +51,22 @@ jobs:
 
       - name: SSH Setup + Run Ansible Deploy
         run: |
-          # Set up SSH key to reach the bastion
           mkdir -p ~/.ssh
           echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
 
-          # Add known hosts to avoid prompts
           ssh-keyscan -H ${{ secrets.BASTION_PUBLIC_IP }} >> ~/.ssh/known_hosts || true
           ssh-keyscan -H ${{ secrets.EC2_PRIVATE_IP }} >> ~/.ssh/known_hosts || true
 
-          # Create Ansible inventory
           echo "[web]" > ansible/inventory.ini
           echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }} -o IdentityFile=~/.ssh/id_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
 
-          # Install required Ansible collections
           ansible-galaxy collection install -r ansible/requirements.yml
 
-          # Run the playbook
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml
 
-          # Cleanup keys
           rm -f ~/.ssh/id_rsa flo-east-1.pem bastion_key.pem
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
@@ -82,4 +76,3 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           ANSIBLE_HOST_KEY_CHECKING: false
-#test1

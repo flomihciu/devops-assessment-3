@@ -2,88 +2,30 @@
   hosts: web
   become: true
 
-  vars:
-    docker_image_backend: "{{ lookup('env', 'DOCKER_USERNAME') }}/backend:latest"
-    docker_image_frontend: "{{ lookup('env', 'DOCKER_USERNAME') }}/frontend:latest"
-    db_host: "{{ lookup('env', 'RDS_ENDPOINT') }}"
-    db_user: "{{ lookup('env', 'DB_USERNAME') }}"
-    db_pass: "{{ lookup('env', 'DB_PASSWORD') }}"
-    db_name: "{{ lookup('env', 'DB_NAME') }}"
-
   tasks:
-    - name: Install Docker
+    - name: Install Docker & Docker Compose
       apt:
-        name: docker.io
+        name:
+          - docker.io
+          - docker-compose
         state: present
         update_cache: true
 
-    - name: Pull backend image
-      community.docker.docker_image:
-        name: "{{ docker_image_backend }}"
-        source: pull
-      register: backend_image_pull
+    - name: Copy docker-compose.yml to EC2
+      ansible.builtin.copy:
+        src: ../docker-compose.yml
+        dest: /home/ubuntu/docker-compose.yml
 
-    - name: Pull frontend image
-      community.docker.docker_image:
-        name: "{{ docker_image_frontend }}"
-        source: pull
-      register: frontend_image_pull
+    - name: Copy .env file to EC2
+      ansible.builtin.copy:
+        src: ../.env
+        dest: /home/ubuntu/.env
 
-    - name: Stop and remove existing backend container (if exists)
-      community.docker.docker_container:
-        name: backend
-        state: absent
-      when: backend_image_pull.changed
+    - name: Ensure containers are running with Docker Compose
+      community.docker.docker_compose:
+        project_src: /home/ubuntu
+        state: present
 
-    - name: Stop and remove existing frontend container (if exists)
-      community.docker.docker_container:
-        name: frontend
-        state: absent
-      when: frontend_image_pull.changed
-
-    - name: Run backend container with connection string
-      community.docker.docker_container:
-        name: backend
-        image: "{{ docker_image_backend }}"
-        state: started
-        restart_policy: always
-        recreate: true
-        exposed_ports:
-          - "5000"
-        published_ports:
-          - "5000:5000"
-        env:
-          CONNECTION_STRING: "postgresql://{{ db_user }}:{{ db_pass }}@{{ db_host }}:5432/{{ db_name }}"
-      when: backend_image_pull.changed
-
-    - name: Run frontend container
-      community.docker.docker_container:
-        name: frontend
-        image: "{{ docker_image_frontend }}"
-        state: started
-        restart_policy: always
-        recreate: true
-        exposed_ports:
-          - "80"
-        published_ports:
-          - "80:80"
-      when: frontend_image_pull.changed
-
-    # --- Frontend Health Check ---
-    - name: Check if frontend app is responding
-      ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost
-      register: frontend_status
-
-    - name: Fail if frontend app did not return 200
-      ansible.builtin.fail:
-        msg: "Frontend app is not responding as expected!"
-      when: frontend_status.stdout != "200"
-
-    - name: Debug frontend status code
-      ansible.builtin.debug:
-        msg: "Frontend responded with status code: {{ frontend_status.stdout }}"
-
-    # --- Backend Health Check (with retry) ---
     - name: Wait for backend app to respond
       ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 || true
       register: backend_status

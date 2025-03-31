@@ -2,9 +2,7 @@ version: '3.8'
 
 services:
   frontend:
-    build: 
-      context: ./flask-react/nginx
-      dockerfile: Dockerfile
+    image: flomihciu/nginx-frontend:latest
     ports:
       - "80:80"
     depends_on:
@@ -13,9 +11,7 @@ services:
       - app-network
 
   backend:
-    build: 
-      context: ./flask-react/flask
-      dockerfile: Dockerfile
+    image: flomihciu/flask-backend:latest
     ports:
       - "5000:5000"
     environment:
@@ -26,7 +22,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:5000/data"]
+      test: ["CMD", "curl", "--fail", "http://localhost:5000/movies"]
       interval: 30s
       retries: 3
 
