@@ -76,7 +76,7 @@ resource "aws_main_route_table_association" "main_rt_assoc" {
 }
 
 resource "aws_eip" "nat_eip" {
-  domain = "vpc" # updated from deprecated 'vpc = true'
+  domain = "vpc"
   depends_on = [aws_internet_gateway.igw]
 }
 

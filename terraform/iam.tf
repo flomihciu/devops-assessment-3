@@ -27,7 +27,6 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
   role = aws_iam_role.ec2_role.name
 }
 
-# NEW: Custom IAM policy for Terraform S3 + DynamoDB backend access
 resource "aws_iam_policy" "terraform_backend_access" {
   name = "TerraformBackendAccessPolicy"
 
