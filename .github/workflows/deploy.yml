@@ -45,14 +45,15 @@ jobs:
       - name: Decode and copy PEM key to bastion
         run: |
           echo "${{ secrets.BASTION_SSH_KEY_B64 }}" | base64 -d > flo-east-1.pem
-          chmod 600 flo-east-1.pem
-          scp -o StrictHostKeyChecking=no -i flo-east-1.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:~/flo-east-1.pem
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > bastion_key.pem
+          chmod 600 flo-east-1.pem bastion_key.pem
+          scp -o StrictHostKeyChecking=no -i bastion_key.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:~/flo-east-1.pem
 
       - name: SSH Setup + Run Ansible Deploy
         run: |
           # Set up SSH
           mkdir -p ~/.ssh
-          printf "%s\n" "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/id_rsa
@@ -72,7 +73,7 @@ jobs:
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml
 
           # Cleanup
-          rm -f ~/.ssh/id_rsa flo-east-1.pem
+          rm -f ~/.ssh/id_rsa flo-east-1.pem bastion_key.pem
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -81,4 +82,3 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           ANSIBLE_HOST_KEY_CHECKING: false
-#test1
