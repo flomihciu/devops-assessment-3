@@ -42,11 +42,12 @@ jobs:
         if: github.actor == 'your-github-username'  # change this to your GitHub username
         run: sleep 120
 
-      # 🛠 Optional: Drop into live SSH session (interactive debug)
-      # Uncomment this block if you want tmate instead of sleep
-      # - name: Setup tmate session
-      #   if: github.actor == 'your-github-username'
-      #   uses: mxschmitt/action-tmate@v3
+      # ⬇️ New: Write PEM and transfer to Bastion
+      - name: Write and copy PEM key to bastion
+        run: |
+          echo "${{ secrets.BASTION_SSH_KEY }}" > flo-east-1.pem
+          chmod 600 flo-east-1.pem
+          scp -o StrictHostKeyChecking=no -i flo-east-1.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:~/flo-east-1.pem
 
       - name: SSH Setup + Run Ansible Deploy
         run: |
@@ -63,7 +64,7 @@ jobs:
 
           # Create Ansible inventory
           echo "[web]" > ansible/inventory.ini
-          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }} -o IdentityFile=~/.ssh/id_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
+          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }} -o IdentityFile=~/flo-east-1.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
 
           # Install Ansible collections (includes community.docker)
           ansible-galaxy collection install -r ansible/requirements.yml
@@ -72,7 +73,7 @@ jobs:
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml
 
           # Cleanup
-          rm -f ~/.ssh/id_rsa
+          rm -f ~/.ssh/id_rsa flo-east-1.pem
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           DB_USER: ${{ secrets.DB_USER }}
@@ -81,4 +82,3 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           ANSIBLE_HOST_KEY_CHECKING: false
-#test1
