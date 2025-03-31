@@ -83,10 +83,13 @@
       ansible.builtin.debug:
         msg: "Frontend responded with status code: {{ frontend_status.stdout }}"
 
-    # --- Backend Health Check ---
-    - name: Check if backend app is responding
-      ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:5000
+    # --- Backend Health Check (with retry) ---
+    - name: Wait for backend app to respond
+      ansible.builtin.shell: curl -s -o /dev/null -w "%{http_code}" http://localhost:5000 || true
       register: backend_status
+      retries: 20
+      delay: 3
+      until: backend_status.stdout == "200"
 
     - name: Fail if backend app did not return 200
       ansible.builtin.fail:
