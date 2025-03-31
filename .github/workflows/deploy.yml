@@ -64,7 +64,7 @@ jobs:
 
           # Create Ansible inventory
           echo "[web]" > ansible/inventory.ini
-          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }} -o IdentityFile=/tmp/flo-east-1.pem -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
+          echo "app ansible_host=${{ secrets.EC2_PRIVATE_IP }} ansible_user=ubuntu ansible_ssh_common_args='-o ProxyJump=ubuntu@${{ secrets.BASTION_PUBLIC_IP }} -o IdentityFile=~/.ssh/id_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no'" >> ansible/inventory.ini
 
           # Install required Ansible collections
           ansible-galaxy collection install -r ansible/requirements.yml
