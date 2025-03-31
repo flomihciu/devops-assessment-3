@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, abort, request, make_response, send_from_directory
+from flask import Flask, jsonify, abort, request, make_response
 from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -8,11 +8,11 @@ app = Flask(__name__)
 CORS(app)
 
 DATABASE_CONFIG = {
-    'dbname': 'postgres',
-    'user': 'postgres',
-    'password': 'postgres',
-    'host': 'localhost',
-    'port': '5432'
+    'dbname': os.getenv('POSTGRES_DB'),
+    'user': os.getenv('POSTGRES_USER'),
+    'password': os.getenv('POSTGRES_PASSWORD'),
+    'host': os.getenv('POSTGRES_HOST', 'database'),
+    'port': os.getenv('POSTGRES_PORT', 5432)
 }
 
 def get_db_connection():
@@ -71,7 +71,7 @@ def add_movie():
     title = request.json['title']
     director = request.json.get('director')
     year = request.json.get('year')
-    
+
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -96,7 +96,7 @@ def update_movie(movie_id):
     title = request.json.get('title', movie['title'])
     director = request.json.get('director', movie['director'])
     year = request.json.get('year', movie['year'])
-    
+
     cursor.execute(
         "UPDATE movies SET title = %s, director = %s, year = %s WHERE movie_id = %s RETURNING *;",
         (title, director, year, movie_id)
@@ -129,5 +129,6 @@ def bad_request(error):
     return make_response(jsonify({'error': 'Bad request'}), 400)
 
 if __name__ == '__main__':
-    init_movie_db()
+    if os.getenv("INIT_DB", "false").lower() == "true":
+        init_movie_db()
     app.run(host='0.0.0.0', port=5000)
