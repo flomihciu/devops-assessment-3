@@ -76,7 +76,7 @@ resource "aws_main_route_table_association" "main_rt_assoc" {
 }
 
 resource "aws_eip" "nat_eip" {
-  vpc = true
+  domain = "vpc" # updated from deprecated 'vpc = true'
   depends_on = [aws_internet_gateway.igw]
 }
 
@@ -114,6 +114,7 @@ resource "aws_route_table_association" "private_rta_2" {
 
 resource "aws_db_subnet_group" "db_subnet_group" {
   name = "flo-db-subnet-group"
+
   subnet_ids = [
     aws_subnet.private_subnet_1.id,
     aws_subnet.private_subnet_2.id
