@@ -29,7 +29,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build & Push Backend Docker Image (with cache)
+      - name: Build & Push Backend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: flask-react/flask
@@ -39,7 +39,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build & Push Frontend Docker Image (with cache, no-cache enabled)
+      - name: Build & Push Frontend Docker Image
         uses: docker/build-push-action@v5
         with:
           context: flask-react/nginx/reactApp
@@ -50,16 +50,11 @@ jobs:
           cache-to: type=gha,mode=max
           no-cache: true
 
-      - name: Sleep for 2 minutes (debug only)
-        if: github.actor == 'your-github-username'
-        run: sleep 120
-
       - name: Decode and copy PEM key to bastion
         run: |
           echo "${{ secrets.BASTION_SSH_KEY_B64 }}" | base64 -d > flo-east-1.pem
-          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > bastion_key.pem
-          chmod 600 flo-east-1.pem bastion_key.pem
-          scp -o StrictHostKeyChecking=no -i bastion_key.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:/tmp/flo-east-1.pem
+          chmod 600 flo-east-1.pem
+          scp -o StrictHostKeyChecking=no -i flo-east-1.pem flo-east-1.pem ubuntu@${{ secrets.BASTION_PUBLIC_IP }}:/tmp/flo-east-1.pem
 
       - name: SSH Setup + Run Ansible Deploy
         run: |
@@ -80,7 +75,7 @@ jobs:
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml \
             -e "db_user=${{ secrets.DB_USER }} db_password=${{ secrets.DB_PASSWORD }} db_name=${{ secrets.DB_NAME }} rds_endpoint=${{ secrets.RDS_ENDPOINT }}"
 
-          rm -f ~/.ssh/id_rsa flo-east-1.pem bastion_key.pem
+          rm -f ~/.ssh/id_rsa flo-east-1.pem
         env:
           SSH_PRIVATE_KEY: ${{ secrets.AWS_SSH_PRIVATE_KEY }}
           DB_USER: ${{ secrets.DB_USER }}

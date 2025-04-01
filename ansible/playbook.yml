@@ -27,15 +27,6 @@
         dest: /usr/local/lib/docker/cli-plugins/docker-compose
         mode: '0755'
 
-    - name: Create symlink for docker-compose plugin
-      file:
-        src: /usr/local/lib/docker/cli-plugins/docker-compose
-        dest: /usr/local/bin/docker-compose
-        state: link
-
-    - name: Verify Docker Compose v2 is installed
-      command: docker compose version
-
     - name: Copy docker-compose.yml to EC2
       copy:
         src: ../docker-compose.yml
@@ -69,24 +60,6 @@
     - name: Start containers with Docker Compose
       community.docker.docker_compose_v2:
         project_src: /home/ubuntu
-        state: present
-
-    - name: Ensure PostgreSQL client is installed
-      apt:
-        name: postgresql-client
-        state: present
-        update_cache: true
-
-    - name: Ensure psycopg2 is installed for Ansible to interact with Postgres
-      pip:
-        name: psycopg2-binary
-
-    - name: Create RDS database if not exists
-      community.postgresql.postgresql_db:
-        name: "{{ db_name }}"
-        login_host: "{{ rds_endpoint }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
         state: present
 
     - name: Pause to allow services to stabilize
