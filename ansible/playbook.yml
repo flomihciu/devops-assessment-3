@@ -3,10 +3,10 @@
   become: true
 
   vars:
-    db_name: "{{ db_name }}"
-    db_user: "{{ db_user }}"
-    db_password: "{{ db_password }}"
-    rds_endpoint: "{{ rds_endpoint }}"
+    db_name: "{{ lookup('env', 'DB_NAME') }}"
+    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+    rds_endpoint: "{{ lookup('env', 'RDS_ENDPOINT') }}"
 
   tasks:
     - name: Install PostgreSQL client (for RDS access)
@@ -20,6 +20,14 @@
         name: python3-psycopg2
         state: present
         update_cache: true
+
+    - name: Source environment variables from .env
+      shell: |
+        set -a
+        source /home/ubuntu/.env
+        set +a
+      args:
+        executable: /bin/bash
 
     - name: "DEBUG: Show passed-in RDS endpoint"
       debug:
