@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: 3.11
 
       - name: Install dependencies
         run: |
@@ -27,6 +27,8 @@ jobs:
       - name: Run Tests
         run: |
           pytest flask-react/flask
+        env:
+          POSTGRES_HOST: localhost
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v2
