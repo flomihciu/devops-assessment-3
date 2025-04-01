@@ -21,6 +21,10 @@
         state: present
         update_cache: true
 
+    - name: DEBUG: Show passed-in RDS endpoint
+      debug:
+        msg: "RDS endpoint: {{ rds_endpoint }}"
+
     - name: Ensure flo-db exists in RDS
       community.postgresql.postgresql_db:
         name: "{{ db_name }}"
