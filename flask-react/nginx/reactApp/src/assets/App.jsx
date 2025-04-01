@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const API_URL = 'http://127.0.0.1:5000';
+const API_URL = ''; // Changed to relative path for Nginx proxy
 
 function App() {
   const [movies, setMovies] = useState([]);
@@ -74,7 +74,7 @@ function App() {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h1>Movie Management</h1>
-      
+
       <section style={{ marginBottom: '20px' }}>
         <h2>All Movies</h2>
         <button onClick={fetchMovies}>Refresh Movies</button>
