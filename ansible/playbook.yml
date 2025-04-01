@@ -9,6 +9,22 @@
     rds_endpoint: "{{ lookup('env', 'RDS_ENDPOINT') }}"
 
   tasks:
+    - name: Install PostgreSQL client (for RDS access)
+      apt:
+        name: postgresql-client
+        state: present
+        update_cache: true
+
+    - name: Ensure flo-db exists in RDS
+      community.postgresql.postgresql_db:
+        name: "{{ db_name }}"
+        state: present
+        login_host: "{{ rds_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
+        port: 5432
+        ssl_mode: require
+
     - name: Install Docker
       apt:
         name: docker.io
