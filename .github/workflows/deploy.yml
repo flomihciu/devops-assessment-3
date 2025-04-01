@@ -20,6 +20,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ansible openssh-client
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Docker Login
         run: echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
         env:
@@ -113,4 +120,3 @@ jobs:
             --topic-arn ${{ secrets.SNS_TOPIC_ARN }} \
             --message "❌ Terraform deploy failed for branch ${{ github.ref_name }} on repo ${{ github.repository }}" \
             --region ${{ secrets.AWS_REGION }}
-#TEST1
