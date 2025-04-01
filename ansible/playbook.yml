@@ -2,12 +2,6 @@
   hosts: web
   become: true
 
-  vars:
-    db_name: "{{ lookup('env', 'DB_NAME') }}"
-    db_user: "{{ lookup('env', 'DB_USER') }}"
-    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
-    rds_endpoint: "{{ lookup('env', 'RDS_ENDPOINT') }}"
-
   tasks:
     - name: Install PostgreSQL client (for RDS access)
       apt:
@@ -28,6 +22,13 @@
         set +a
       args:
         executable: /bin/bash
+
+    - name: Register DB values as facts from env
+      set_fact:
+        db_name: "{{ lookup('env', 'DB_NAME') }}"
+        db_user: "{{ lookup('env', 'DB_USER') }}"
+        db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+        rds_endpoint: "{{ lookup('env', 'RDS_ENDPOINT') }}"
 
     - name: "DEBUG: Show passed-in RDS endpoint"
       debug:
