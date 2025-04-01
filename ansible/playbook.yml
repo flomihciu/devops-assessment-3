@@ -41,16 +41,6 @@
     - name: Print .env contents for debug
       shell: cat /home/ubuntu/.env
 
-    - name: Ensure flo-db exists in RDS
-      community.postgresql.postgresql_db:
-        name: "{{ db_name }}"
-        state: present
-        login_host: "{{ rds_endpoint }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
-        port: 5432
-        ssl_mode: require
-
     - name: Stop all running containers
       shell: docker stop $(docker ps -aq) || true
 
