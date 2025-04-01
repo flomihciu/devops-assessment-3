@@ -21,7 +21,7 @@
         state: present
         update_cache: true
 
-    - name: DEBUG: Show passed-in RDS endpoint
+    - name: "DEBUG: Show passed-in RDS endpoint"
       debug:
         msg: "RDS endpoint: {{ rds_endpoint }}"
 
