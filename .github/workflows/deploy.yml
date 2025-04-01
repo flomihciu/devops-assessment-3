@@ -79,10 +79,12 @@ jobs:
           echo "rds_endpoint=${{ secrets.RDS_ENDPOINT }}"
 
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml \
-            -e "db_user=${{ secrets.DB_USER }} \
-                 db_password=${{ secrets.DB_PASSWORD }} \
-                 db_name=${{ secrets.DB_NAME }} \
-                 rds_endpoint=${{ secrets.RDS_ENDPOINT }}"
+            --extra-vars '{
+              "db_user": "${{ secrets.DB_USER }}",
+              "db_password": "${{ secrets.DB_PASSWORD }}",
+              "db_name": "${{ secrets.DB_NAME }}",
+              "rds_endpoint": "${{ secrets.RDS_ENDPOINT }}"
+            }'
 
           rm -f ~/.ssh/id_rsa flo-east-1.pem
         env:
