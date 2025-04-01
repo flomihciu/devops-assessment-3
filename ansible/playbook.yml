@@ -2,49 +2,13 @@
   hosts: web
   become: true
 
+  vars:
+    db_name: "{{ lookup('env', 'DB_NAME') }}"
+    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+    rds_endpoint: "{{ lookup('env', 'RDS_ENDPOINT') }}"
+
   tasks:
-    - name: Install PostgreSQL client (for RDS access)
-      apt:
-        name: postgresql-client
-        state: present
-        update_cache: true
-
-    - name: Install psycopg2 for PostgreSQL support
-      apt:
-        name: python3-psycopg2
-        state: present
-        update_cache: true
-
-    - name: Use passed-in vars
-      set_fact:
-        db_name: "{{ db_name }}"
-        db_user: "{{ db_user }}"
-        db_password: "{{ db_password }}"
-        rds_endpoint: "{{ rds_endpoint }}"
-
-    - name: Generate .env file from template
-      template:
-        src: templates/env.j2
-        dest: /home/ubuntu/.env
-        mode: '0644'
-
-    - name: Print .env contents for debug
-      shell: cat /home/ubuntu/.env
-
-    - name: "DEBUG: Show passed-in RDS endpoint"
-      debug:
-        msg: "RDS endpoint: {{ rds_endpoint }}"
-
-    - name: Ensure flo-db exists in RDS
-      community.postgresql.postgresql_db:
-        name: "{{ db_name }}"
-        state: present
-        login_host: "{{ rds_endpoint }}"
-        login_user: "{{ db_user }}"
-        login_password: "{{ db_password }}"
-        port: 5432
-        ssl_mode: require
-
     - name: Install Docker
       apt:
         name: docker.io
@@ -67,6 +31,15 @@
       copy:
         src: ../docker-compose.yml
         dest: /home/ubuntu/docker-compose.yml
+
+    - name: Generate .env file from template
+      template:
+        src: templates/env.j2
+        dest: /home/ubuntu/.env
+        mode: '0644'
+
+    - name: Print .env contents for debug
+      shell: cat /home/ubuntu/.env
 
     - name: Stop all running containers
       shell: docker stop $(docker ps -aq) || true
