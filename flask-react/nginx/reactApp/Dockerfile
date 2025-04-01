@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN npm install && npm cache clean --force
 
 # Copy the rest of the source code
 COPY . .
@@ -22,6 +22,9 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy custom Nginx config for API proxying
 COPY default.conf /etc/nginx/conf.d/default.conf
+
+# Healthcheck for container health monitoring
+HEALTHCHECK CMD wget --spider -q http://localhost || exit 1
 
 # Expose HTTP port
 EXPOSE 80

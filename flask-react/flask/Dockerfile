@@ -1,20 +1,31 @@
-FROM python:3.11-slim
+# Stage 1: Builder
+FROM python:3.11-slim as builder
 
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
+# Install netcat and pip tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+ && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Pre-copy just requirements for caching
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
+RUN pip install --upgrade pip \
+ && pip install --user --no-cache-dir -r requirements.txt
+
+# Stage 2: Final Image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy installed packages from builder
+COPY --from=builder /root/.local /root/.local
+ENV PATH=/root/.local/bin:$PATH
+
+# Copy app code
 COPY . .
 
-# Expose Flask default port
 EXPOSE 5000
 
-# Run the app
 CMD ["python", "app.py"]

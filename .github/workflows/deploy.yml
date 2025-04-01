@@ -89,3 +89,9 @@ jobs:
           RDS_ENDPOINT: ${{ secrets.RDS_ENDPOINT }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           ANSIBLE_HOST_KEY_CHECKING: false
+
+      - name: Clean up dangling Docker resources
+        run: |
+          docker image prune -f
+          docker container prune -f
+          docker volume prune -f
