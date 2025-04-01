@@ -1,4 +1,4 @@
-# 🎮 Movie Database Application Deployment
+# Movie Database Application Deployment
 
 This repository contains the code and configurations for deploying a **three-tier Movie Database application**, consisting of:
 
