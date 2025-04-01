@@ -2,6 +2,12 @@
   hosts: web
   become: true
 
+  vars:
+    db_name: "{{ lookup('env', 'DB_NAME') }}"
+    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+    rds_endpoint: "{{ lookup('env', 'RDS_ENDPOINT') }}"
+
   tasks:
     - name: Install Docker
       apt:
@@ -57,6 +63,20 @@
     - name: Start containers with Docker Compose
       community.docker.docker_compose_v2:
         project_src: /home/ubuntu
+        state: present
+
+    - name: Ensure PostgreSQL client is installed
+      apt:
+        name: postgresql-client
+        state: present
+        update_cache: true
+
+    - name: Create RDS database if not exists
+      community.postgresql.postgresql_db:
+        name: "{{ db_name }}"
+        login_host: "{{ rds_endpoint }}"
+        login_user: "{{ db_user }}"
+        login_password: "{{ db_password }}"
         state: present
 
     - name: Pause to allow services to stabilize
