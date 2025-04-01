@@ -7,12 +7,13 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# ✅ Use RDS credentials from .env file
 DATABASE_CONFIG = {
-    'dbname': os.getenv('db_name', 'postgres'),
-    'user': os.getenv('db_user', 'postgres'),
-    'password': os.getenv('db_password', 'postgres'),
-    'host': os.getenv('rds_endpoint', 'localhost'),
-    'port': 5432
+    'dbname': os.getenv('POSTGRES_DB'),
+    'user': os.getenv('POSTGRES_USER'),
+    'password': os.getenv('POSTGRES_PASSWORD'),
+    'host': os.getenv('POSTGRES_HOST').split(':')[0],  # remove port if included
+    'port': os.getenv('POSTGRES_PORT', '5432')
 }
 
 def get_db_connection():
@@ -20,7 +21,9 @@ def get_db_connection():
 
 @app.route('/')
 def home():
-    return jsonify({"message": "Welcome to the Movie API. Use /movies for CRUD operations."})
+    return jsonify({
+        "message": "Welcome to the Movie API. Use /movies for CRUD operations."
+    })
 
 @app.route('/movies', methods=['GET'])
 def get_movies():
@@ -46,15 +49,12 @@ def get_movie(movie_id):
 
 @app.route('/movies', methods=['POST'])
 def add_movie():
-    if not request.is_json:
-        abort(400)
-    data = request.get_json()
-    if 'title' not in data:
+    if not request.json or 'title' not in request.json:
         abort(400)
 
-    title = data['title']
-    director = data.get('director')
-    year = data.get('year')
+    title = request.json['title']
+    director = request.json.get('director')
+    year = request.json.get('year')
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -70,10 +70,6 @@ def add_movie():
 
 @app.route('/movies/<int:movie_id>', methods=['PUT'])
 def update_movie(movie_id):
-    if not request.is_json:
-        abort(400)
-    data = request.get_json()
-
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM movies WHERE movie_id = %s;", (movie_id,))
@@ -81,9 +77,9 @@ def update_movie(movie_id):
     if movie is None:
         abort(404)
 
-    title = data.get('title', movie['title'])
-    director = data.get('director', movie['director'])
-    year = data.get('year', movie['year'])
+    title = request.json.get('title', movie['title'])
+    director = request.json.get('director', movie['director'])
+    year = request.json.get('year', movie['year'])
 
     cursor.execute(
         "UPDATE movies SET title = %s, director = %s, year = %s WHERE movie_id = %s RETURNING *;",
@@ -100,25 +96,21 @@ def delete_movie(movie_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM movies WHERE movie_id = %s RETURNING movie_id;", (movie_id,))
-    deleted = cursor.fetchone()
+    deleted_movie = cursor.fetchone()
     conn.commit()
     cursor.close()
     conn.close()
-    if deleted is None:
+    if deleted_movie is None:
         abort(404)
     return jsonify({'result': True})
-
-@app.errorhandler(400)
-def bad_request(error):
-    return make_response(jsonify({'error': 'Bad request'}), 400)
 
 @app.errorhandler(404)
 def not_found(error):
     return make_response(jsonify({'error': 'Not found'}), 404)
 
-@app.errorhandler(500)
-def server_error(error):
-    return make_response(jsonify({'error': 'Internal server error'}), 500)
+@app.errorhandler(400)
+def bad_request(error):
+    return make_response(jsonify({'error': 'Bad request'}), 400)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
