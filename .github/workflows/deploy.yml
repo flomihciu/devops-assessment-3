@@ -73,7 +73,10 @@ jobs:
           ansible-galaxy collection install -r ansible/requirements.yml
 
           ansible-playbook -vvvv -i ansible/inventory.ini ansible/playbook.yml \
-            -e "db_user=${{ secrets.DB_USER }} db_password=${{ secrets.DB_PASSWORD }} db_name=${{ secrets.DB_NAME }} rds_endpoint=${{ secrets.RDS_ENDPOINT }}"
+            -e db_user="${{ secrets.DB_USER }}" \
+            -e db_password="${{ secrets.DB_PASSWORD }}" \
+            -e db_name="${{ secrets.DB_NAME }}" \
+            -e rds_endpoint="${{ secrets.RDS_ENDPOINT }}"
 
           rm -f ~/.ssh/id_rsa flo-east-1.pem
         env:
